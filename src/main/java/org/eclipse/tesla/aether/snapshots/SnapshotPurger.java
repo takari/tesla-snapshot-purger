@@ -40,22 +40,23 @@ public class SnapshotPurger
             File artifactFile = event.getFile();
             File artifactDir = artifactFile.getParentFile();
 
-            String artifactName = artifactFile.getName();
-            artifactName = artifactName.replace( artifact.getVersion(), artifact.getBaseVersion() );
-            int snapshot = artifactName.lastIndexOf( "SNAPSHOT" );
+            String snapshotName = artifactFile.getName();
+            snapshotName = snapshotName.replace( artifact.getVersion(), artifact.getBaseVersion() );
+            int snapshot = snapshotName.lastIndexOf( "SNAPSHOT" );
             if ( snapshot >= 0 )
             {
                 String snapshotRegex =
-                    "\\Q" + artifactName.substring( 0, snapshot ) + "\\E([0-9]{8}.[0-9]{6}-[0-9]+)\\Q"
-                        + artifactName.substring( snapshot + 8 ) + "\\E(\\.(md5|sha1|lastUpdated))?";
-                Pattern filenamePattern = Pattern.compile( snapshotRegex );
+                    "\\Q" + snapshotName.substring( 0, snapshot ) + "\\E" + "([0-9]{8}.[0-9]{6}-[0-9]+)" + "\\Q"
+                        + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|lastUpdated))?";
+
+                Pattern snapshotPattern = Pattern.compile( snapshotRegex );
 
                 String[] snapshotFiles = artifactDir.list();
                 if ( snapshotFiles != null )
                 {
                     for ( String snapshotFile : snapshotFiles )
                     {
-                        if ( !filenamePattern.matcher( snapshotFile ).matches() )
+                        if ( !snapshotPattern.matcher( snapshotFile ).matches() )
                         {
                             continue;
                         }
@@ -63,6 +64,7 @@ public class SnapshotPurger
                         {
                             continue;
                         }
+
                         File oldFile = new File( artifactDir, snapshotFile );
                         if ( oldFile.delete() )
                         {
@@ -73,6 +75,10 @@ public class SnapshotPurger
                             logger.debug( "Failed to purge old snapshot artifact " + oldFile );
                         }
                     }
+                }
+                else
+                {
+                    logger.debug( "Failed to scan for old snapshot artifacts in " + artifactDir );
                 }
             }
         }

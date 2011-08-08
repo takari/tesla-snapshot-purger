@@ -17,7 +17,7 @@
     <version>10</version>
   </parent>
 
-  <groupId>org.sonatype.tesla</groupId>
+  <groupId>org.eclipse.tesla</groupId>
   <artifactId>tesla-snapshot-purger</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>

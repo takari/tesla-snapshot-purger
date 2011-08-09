@@ -38,6 +38,10 @@ public class SnapshotPurger
         if ( artifact.isSnapshot() )
         {
             File artifactFile = event.getFile();
+            if ( artifactFile == null )
+            {
+                return;
+            }
             File artifactDir = artifactFile.getParentFile();
 
             String snapshotName = artifactFile.getName();

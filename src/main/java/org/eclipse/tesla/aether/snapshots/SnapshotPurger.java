@@ -31,59 +31,63 @@ public class SnapshotPurger
     @Requirement
     private Logger logger = NullLogger.INSTANCE;
 
+    SnapshotPurger setLogger( Logger logger )
+    {
+        this.logger = ( logger != null ) ? logger : NullLogger.INSTANCE;
+        return this;
+    }
+
     @Override
     public void artifactDownloaded( RepositoryEvent event )
     {
-        Artifact artifact = event.getArtifact();
-        if ( artifact.isSnapshot() )
+        File artifactFile = event.getFile();
+        if ( artifactFile == null )
         {
-            File artifactFile = event.getFile();
-            if ( artifactFile == null )
+            return;
+        }
+        File artifactDir = artifactFile.getParentFile();
+
+        Artifact artifact = event.getArtifact();
+
+        String snapshotName = artifactFile.getName();
+        snapshotName = snapshotName.replace( artifact.getVersion(), artifact.getBaseVersion() );
+        int snapshot = snapshotName.lastIndexOf( "SNAPSHOT" );
+        if ( snapshot >= 0 )
+        {
+            String snapshotRegex =
+                "\\Q" + snapshotName.substring( 0, snapshot ) + "\\E" + "([0-9]{8}.[0-9]{6}-[0-9]+)" + "\\Q"
+                    + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|lastUpdated))?";
+
+            Pattern snapshotPattern = Pattern.compile( snapshotRegex );
+
+            String[] snapshotFiles = artifactDir.list();
+            if ( snapshotFiles != null )
             {
-                return;
-            }
-            File artifactDir = artifactFile.getParentFile();
-
-            String snapshotName = artifactFile.getName();
-            snapshotName = snapshotName.replace( artifact.getVersion(), artifact.getBaseVersion() );
-            int snapshot = snapshotName.lastIndexOf( "SNAPSHOT" );
-            if ( snapshot >= 0 )
-            {
-                String snapshotRegex =
-                    "\\Q" + snapshotName.substring( 0, snapshot ) + "\\E" + "([0-9]{8}.[0-9]{6}-[0-9]+)" + "\\Q"
-                        + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|lastUpdated))?";
-
-                Pattern snapshotPattern = Pattern.compile( snapshotRegex );
-
-                String[] snapshotFiles = artifactDir.list();
-                if ( snapshotFiles != null )
+                for ( String snapshotFile : snapshotFiles )
                 {
-                    for ( String snapshotFile : snapshotFiles )
+                    if ( !snapshotPattern.matcher( snapshotFile ).matches() )
                     {
-                        if ( !snapshotPattern.matcher( snapshotFile ).matches() )
-                        {
-                            continue;
-                        }
-                        if ( snapshotFile.contains( artifact.getVersion() ) )
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
+                    if ( snapshotFile.contains( artifact.getVersion() ) )
+                    {
+                        continue;
+                    }
 
-                        File oldFile = new File( artifactDir, snapshotFile );
-                        if ( oldFile.delete() )
-                        {
-                            logger.debug( "Purged old snapshot artifact " + oldFile );
-                        }
-                        else if ( oldFile.exists() )
-                        {
-                            logger.debug( "Failed to purge old snapshot artifact " + oldFile );
-                        }
+                    File oldFile = new File( artifactDir, snapshotFile );
+                    if ( oldFile.delete() )
+                    {
+                        logger.debug( "Purged old snapshot artifact " + oldFile );
+                    }
+                    else if ( oldFile.exists() )
+                    {
+                        logger.debug( "Failed to purge old snapshot artifact " + oldFile );
                     }
                 }
-                else
-                {
-                    logger.debug( "Failed to scan for old snapshot artifacts in " + artifactDir );
-                }
+            }
+            else
+            {
+                logger.debug( "Failed to scan for old snapshot artifacts in " + artifactDir );
             }
         }
     }

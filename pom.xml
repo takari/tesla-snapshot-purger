@@ -37,19 +37,20 @@
   </licenses>
 
   <properties>
+    <aetherVersion>1.9</aetherVersion> <!-- NOTE: Chosen to match API used in required Maven version -->
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.sonatype.aether</groupId>
       <artifactId>aether-api</artifactId>
-      <version>1.9</version>
+      <version>${aetherVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.sonatype.aether</groupId>
       <artifactId>aether-spi</artifactId>
-      <version>1.9</version>
+      <version>${aetherVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -57,6 +58,31 @@
       <artifactId>plexus-component-annotations</artifactId>
       <version>1.5.5</version>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.aether</groupId>
+      <artifactId>aether-util</artifactId>
+      <version>${aetherVersion}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.aether</groupId>
+      <artifactId>aether-test-util</artifactId>
+      <version>${aetherVersion}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonatype.aether</groupId>
+      <artifactId>aether-impl</artifactId>
+      <version>${aetherVersion}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

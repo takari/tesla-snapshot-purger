@@ -13,6 +13,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Collections;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,9 +43,9 @@ public class SnapshotPurgerTest
         ARTIFACT_ONLY, ARTIFACT_AND_AUXILIARIES
     }
 
-    private static final String GROUP_ID = "test";
+    private static final String GROUP_ID = "gid";
 
-    private static final String ARTIFACT_ID = "test";
+    private static final String ARTIFACT_ID = "aid";
 
     private static final String[] SNAPSHOTS = { "1.0-20110907.162759-1", "1.0-20110907.182759-23",
         "1.0-20110907.232759-234", "1.0-20110908.002759-1234" };
@@ -243,6 +245,64 @@ public class SnapshotPurgerTest
         {
             raf.close();
         }
+    }
+
+    @Test
+    public void testDoNotDeleteExcludedSnapshots()
+        throws Exception
+    {
+        session.setConfigProperty( SnapshotPurger.PROPERTY_EXCLUDES, GROUP_ID + ":" + ARTIFACT_ID );
+        Artifact newArtifact = newArtifact( "jar", "", SNAPSHOTS[3] );
+        Artifact[] oldArtifacts = newArtifacts( "jar", "", SNAPSHOTS[0], SNAPSHOTS[1], SNAPSHOTS[2] );
+        File[] newFiles = createFiles( Files.ARTIFACT_ONLY, newArtifact );
+        File[] oldFiles = createFiles( Files.ARTIFACT_ONLY, oldArtifacts );
+        notify( newArtifact );
+        assertExistent( newFiles );
+        assertExistent( oldFiles );
+    }
+
+    @Test
+    public void testIsMatch()
+    {
+        assertEquals( true, purger.isMatch( "test", "test" ) );
+        assertEquals( true, purger.isMatch( "org.eclipse.tesla", "org.eclipse.tesla" ) );
+        assertEquals( false, purger.isMatch( "org.eclipse_tesla", "org.eclipse.tesla" ) );
+        assertEquals( true, purger.isMatch( "org.eclipse.tesla", "?rg.eclipse.tesla" ) );
+        assertEquals( true, purger.isMatch( "org.eclipse.tesla", "*" ) );
+        assertEquals( true, purger.isMatch( "org.eclipse.tesla", "org.*" ) );
+        assertEquals( false, purger.isMatch( "com.eclipse.tesla", "org.*" ) );
+    }
+
+    @Test
+    public void testIsMatched()
+    {
+        Artifact artifact = newArtifact( "jar", "", "1.0" );
+        assertEquals( false, purger.isMatched( artifact, "" ) );
+        assertEquals( true, purger.isMatched( artifact, GROUP_ID ) );
+        assertEquals( false, purger.isMatched( artifact, GROUP_ID + "fail" ) );
+        assertEquals( true, purger.isMatched( artifact, GROUP_ID + ":*" ) );
+        assertEquals( true, purger.isMatched( artifact, GROUP_ID + ":" + ARTIFACT_ID ) );
+        assertEquals( true, purger.isMatched( artifact, "*:" + ARTIFACT_ID ) );
+        assertEquals( false, purger.isMatched( artifact, GROUP_ID + ":" + ARTIFACT_ID + "fail" ) );
+        assertEquals( false, purger.isMatched( artifact, GROUP_ID + ":" + ARTIFACT_ID + ":fail" ) );
+    }
+
+    @Test
+    public void testIsExcluded()
+    {
+        Artifact artifact = newArtifact( "jar", "", "1.0" );
+        assertEquals( false, purger.isExcluded( artifact, config( null ) ) );
+        assertEquals( false, purger.isExcluded( artifact, config( "" ) ) );
+        assertEquals( false, purger.isExcluded( artifact, config( ",,," ) ) );
+        assertEquals( true, purger.isExcluded( artifact, config( GROUP_ID ) ) );
+        assertEquals( true, purger.isExcluded( artifact, config( ", " + GROUP_ID + " , " ) ) );
+        assertEquals( true, purger.isExcluded( artifact, config( "foo," + GROUP_ID + ",bar" ) ) );
+        assertEquals( true, purger.isExcluded( artifact, config( "foo:foo," + GROUP_ID + ":" + ARTIFACT_ID ) ) );
+    }
+
+    private Map<String, Object> config( String excludes )
+    {
+        return Collections.<String, Object> singletonMap( SnapshotPurger.PROPERTY_EXCLUDES, excludes );
     }
 
 }

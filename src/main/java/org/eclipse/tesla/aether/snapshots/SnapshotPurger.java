@@ -9,6 +9,7 @@ package org.eclipse.tesla.aether.snapshots;
  *******************************************************************************/
 
 import java.io.File;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.codehaus.plexus.component.annotations.Component;
@@ -27,6 +28,8 @@ import org.sonatype.aether.spi.log.NullLogger;
 public class SnapshotPurger
     extends AbstractRepositoryListener
 {
+
+    static final String PROPERTY_EXCLUDES = "tesla.snapshotPurger.excludes";
 
     @Requirement
     private Logger logger = NullLogger.INSTANCE;
@@ -54,6 +57,12 @@ public class SnapshotPurger
         int snapshot = snapshotName.lastIndexOf( "SNAPSHOT" );
         if ( snapshot >= 0 )
         {
+            if ( isExcluded( artifact, event.getSession().getConfigProperties() ) )
+            {
+                logger.debug( "Not purging old snapshots of " + artifact + " as per configuration" );
+                return;
+            }
+
             String snapshotRegex =
                 "\\Q" + snapshotName.substring( 0, snapshot ) + "\\E" + "([0-9]{8}.[0-9]{6}-[0-9]+)" + "\\Q"
                     + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|lastUpdated))?";
@@ -90,6 +99,64 @@ public class SnapshotPurger
                 logger.debug( "Failed to scan for old snapshot artifacts in " + artifactDir );
             }
         }
+    }
+
+    boolean isExcluded( Artifact artifact, Map<String, ?> config )
+    {
+        Object v = config.get( PROPERTY_EXCLUDES );
+        if ( !( v instanceof String ) )
+        {
+            return false;
+        }
+        String[] patterns = v.toString().split( ",+" );
+        for ( String pattern : patterns )
+        {
+            pattern = pattern.trim();
+            if ( isMatched( artifact, pattern ) )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    boolean isMatched( Artifact artifact, String pattern )
+    {
+        String[] coords = pattern.split( ":" );
+        if ( !isMatch( artifact.getGroupId(), coords[0] ) )
+        {
+            return false;
+        }
+        if ( coords.length > 1 && !isMatch( artifact.getArtifactId(), coords[1] ) )
+        {
+            return false;
+        }
+        return coords.length <= 2;
+    }
+
+    boolean isMatch( String coord, String pattern )
+    {
+        StringBuilder regex = new StringBuilder( 128 );
+        for ( int i = 0; i < pattern.length(); i++ )
+        {
+            char c = pattern.charAt( i );
+            switch ( c )
+            {
+                case '?':
+                    regex.append( '.' );
+                    break;
+                case '*':
+                    regex.append( ".*" );
+                    break;
+                default:
+                    if ( !Character.isLetterOrDigit( c ) )
+                    {
+                        regex.append( '\\' );
+                    }
+                    regex.append( c );
+            }
+        }
+        return coord.matches( regex.toString() );
     }
 
 }

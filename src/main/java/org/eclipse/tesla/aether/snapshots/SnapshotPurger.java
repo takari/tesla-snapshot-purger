@@ -65,7 +65,7 @@ public class SnapshotPurger
 
             String snapshotRegex =
                 "\\Q" + snapshotName.substring( 0, snapshot ) + "\\E" + "([0-9]{8}.[0-9]{6}-[0-9]+)" + "\\Q"
-                    + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|lastUpdated))?";
+                    + snapshotName.substring( snapshot + 8 ) + "\\E" + "(\\.(md5|sha1|asc|lastUpdated))?";
 
             Pattern snapshotPattern = Pattern.compile( snapshotRegex );
 

@@ -120,7 +120,7 @@ public class SnapshotPurgerTest
     private File[] createFiles( Files fileSet, Artifact... artifacts )
         throws IOException
     {
-        int filesPerArtifact = fileSet == Files.ARTIFACT_AND_AUXILIARIES ? 4 : 1;
+        int filesPerArtifact = fileSet == Files.ARTIFACT_AND_AUXILIARIES ? 5 : 1;
 
         File[] files = new File[artifacts.length * filesPerArtifact];
 
@@ -142,10 +142,12 @@ public class SnapshotPurgerTest
                 files[index + 1].createNewFile();
                 files[index + 2] = new File( files[index + 0].getAbsolutePath() + ".sha1" );
                 files[index + 2].createNewFile();
+                files[index + 3] = new File( files[index + 0].getAbsolutePath() + ".asc" );
+                files[index + 3].createNewFile();
 
                 // resolution error status files
-                files[index + 3] = new File( files[index + 0].getAbsolutePath() + ".lastUpdated" );
-                files[index + 3].createNewFile();
+                files[index + 4] = new File( files[index + 0].getAbsolutePath() + ".lastUpdated" );
+                files[index + 4].createNewFile();
             }
         }
 

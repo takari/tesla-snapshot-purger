@@ -35,7 +35,7 @@
   </licenses>
 
   <properties>
-    <aetherVersion>1.13.1</aetherVersion> <!-- NOTE: Chosen to match API used in required Maven version -->
+    <aetherVersion>0.9.0.M2</aetherVersion> <!-- NOTE: Chosen to match API used in required Maven version -->
   </properties>
 
   <scm>
@@ -46,13 +46,13 @@
   
   <dependencies>
     <dependency>
-      <groupId>org.sonatype.aether</groupId>
+      <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-api</artifactId>
       <version>${aetherVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.aether</groupId>
+      <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-spi</artifactId>
       <version>${aetherVersion}</version>
       <scope>provided</scope>
@@ -71,19 +71,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.aether</groupId>
-      <artifactId>aether-util</artifactId>
-      <version>${aetherVersion}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.sonatype.aether</groupId>
+      <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-test-util</artifactId>
       <version>${aetherVersion}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.aether</groupId>
+      <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-impl</artifactId>
       <version>${aetherVersion}</version>
       <scope>test</scope>

@@ -1,7 +1,7 @@
 package org.eclipse.tesla.aether.snapshots;
 
 /*******************************************************************************
- * Copyright (c) 2011 Sonatype, Inc.
+ * Copyright (c) 2011, 2013 Sonatype, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,12 +14,13 @@ import java.util.regex.Pattern;
 
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
-import org.sonatype.aether.AbstractRepositoryListener;
-import org.sonatype.aether.RepositoryEvent;
-import org.sonatype.aether.RepositoryListener;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.spi.log.Logger;
-import org.sonatype.aether.spi.log.NullLogger;
+import org.eclipse.aether.AbstractRepositoryListener;
+import org.eclipse.aether.RepositoryEvent;
+import org.eclipse.aether.RepositoryListener;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.spi.log.Logger;
+import org.eclipse.aether.spi.log.LoggerFactory;
+import org.eclipse.aether.spi.log.NullLoggerFactory;
 
 /**
  * A repository listener which purges old snapshots from the local repository when a new snapshot was downloaded.
@@ -31,13 +32,19 @@ public class SnapshotPurger
 
     static final String PROPERTY_EXCLUDES = "tesla.snapshotPurger.excludes";
 
-    @Requirement
-    private Logger logger = NullLogger.INSTANCE;
+    @Requirement( role = LoggerFactory.class )
+    private Logger logger = NullLoggerFactory.LOGGER;
 
-    SnapshotPurger setLogger( Logger logger )
+    SnapshotPurger setLoggerFactory( LoggerFactory loggerFactory )
     {
-        this.logger = ( logger != null ) ? logger : NullLogger.INSTANCE;
+        this.logger = NullLoggerFactory.getSafeLogger( loggerFactory, getClass() );
         return this;
+    }
+
+    void setLogger( LoggerFactory loggerFactory )
+    {
+        // plexus support
+        setLoggerFactory( loggerFactory );
     }
 
     @Override

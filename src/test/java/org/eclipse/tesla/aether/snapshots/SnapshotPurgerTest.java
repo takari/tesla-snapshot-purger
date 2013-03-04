@@ -1,7 +1,7 @@
 package org.eclipse.tesla.aether.snapshots;
 
 /*******************************************************************************
- * Copyright (c) 2011 Sonatype, Inc.
+ * Copyright (c) 2011, 2013 Sonatype, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,22 +16,22 @@ import java.io.RandomAccessFile;
 import java.util.Collections;
 import java.util.Map;
 
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositoryEvent;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
+import org.eclipse.aether.internal.test.util.TestLoggerFactory;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
-import org.sonatype.aether.RepositoryEvent;
-import org.sonatype.aether.artifact.Artifact;
-import org.sonatype.aether.impl.internal.SimpleLocalRepositoryManager;
-import org.sonatype.aether.repository.LocalRepositoryManager;
-import org.sonatype.aether.repository.RemoteRepository;
-import org.sonatype.aether.test.impl.SysoutLogger;
-import org.sonatype.aether.transfer.ArtifactNotFoundException;
-import org.sonatype.aether.util.DefaultRepositorySystemSession;
-import org.sonatype.aether.util.artifact.DefaultArtifact;
-import org.sonatype.aether.util.listener.DefaultRepositoryEvent;
 
 /**
  */
@@ -62,14 +62,16 @@ public class SnapshotPurgerTest
 
     @Before
     public void setUp()
+        throws Exception
     {
         System.out.println( "========== " + testName.getMethodName() );
 
         purger = new SnapshotPurger();
-        purger.setLogger( new SysoutLogger() );
+        purger.setLoggerFactory( new TestLoggerFactory() );
 
-        SimpleLocalRepositoryManager lrm = new SimpleLocalRepositoryManager( localRepoDir.getRoot() );
-        session = new DefaultRepositorySystemSession().setLocalRepositoryManager( lrm );
+        LocalRepository localRepo = new LocalRepository( localRepoDir.getRoot() );
+        session = new DefaultRepositorySystemSession();
+        session.setLocalRepositoryManager( new SimpleLocalRepositoryManagerFactory().newInstance( session, localRepo ) );
     }
 
     @After
@@ -99,7 +101,7 @@ public class SnapshotPurgerTest
     {
         Artifact artifact = new DefaultArtifact( GROUP_ID, ARTIFACT_ID, cls, ext, version );
 
-        RemoteRepository repo = new RemoteRepository( "test", "default", "file:" );
+        RemoteRepository repo = new RemoteRepository.Builder( "test", "default", "file:" ).build();
         LocalRepositoryManager lrm = session.getLocalRepositoryManager();
         File file = new File( lrm.getRepository().getBasedir(), lrm.getPathForRemoteArtifact( artifact, repo, "" ) );
         artifact = artifact.setFile( file );
@@ -156,16 +158,16 @@ public class SnapshotPurgerTest
 
     private RepositoryEvent newEvent( Artifact artifact )
     {
-        DefaultRepositoryEvent event =
-            new DefaultRepositoryEvent( RepositoryEvent.EventType.ARTIFACT_DOWNLOADED, session );
+        RepositoryEvent.Builder event =
+            new RepositoryEvent.Builder( session, RepositoryEvent.EventType.ARTIFACT_DOWNLOADED );
         event.setFile( artifact.getFile() );
         event.setArtifact( artifact );
-        if ( event.getFile() == null )
+        if ( artifact.getFile() == null )
         {
             event.setException( new ArtifactNotFoundException( artifact, null ) );
         }
 
-        return event;
+        return event.build();
     }
 
     private void notify( Artifact artifact )
